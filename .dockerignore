@@ -1,0 +1,12 @@
+node_modules
+.eslint
+.gitignore
+.github
+.vscode
+package-lock.json
+.env
+.env-example
+LICENSE
+README.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md

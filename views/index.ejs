@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" href="/static/css/style.css" />
+		<link rel="stylesheet" href="/static/libs/bootstrap/css/bootstrap.min.css" />
+		<link rel="stylesheet" href="/static/libs/bootstrap-icons/bootstrap-icons.min.css" />
+		<title><%= info.title %></title>
+	</head>
+	<body>
+		<h1><%= info.title %></h1>
+		<p>Welcome to <%= info.title %>.</p>
+		<form class="row g-3 mb-4" action="/create" method="post">
+			<h2>Create a new monitor :</h2>
+			<div class="col-sm-6">
+				<input type="email" name="email" class="form-control" placeholder="Email" autocomplete="email" aria-label="Email input">
+			</div>
+			<div class="col-sm-6">
+				<input type="text" name="name" class="form-control" placeholder="Monitor name" autocomplete="off" aria-label="Monitor name input">
+			</div>
+			<div class="col-sm-4 input-group">
+				<input type="password" name="keyword" class="form-control" placeholder="Keyword" autocomplete="off" aria-label="Keyword input" aria-describedby="password-input">
+				<button type="button" class="input-group-text" id="password-input"><i class="bi bi-eye"></i></button>
+			</div>
+			<div class="col-sm-4">
+				<select name="mode" class="form-select">
+					<option value="">Alert when :</option>
+					<option value="0">The keyword is found</option>
+					<option value="1">The keyword is missing</option>
+				</select>
+			</div>
+			<div class="col-sm-4">
+				<select name="interval" class="form-select">
+					<option value="" selected disabled>Monitor interval</option>
+					<option value="0">1 minute (not recommended)</option>
+					<option value="1">5 minutes</option>
+					<option value="2">15 minutes</option>
+					<option value="3">30 minutes</option>
+					<option value="4">1 hour</option>
+					<option value="5">3 hours</option>
+					<option value="6">6 hours</option>
+					<option value="7">12 hours</option>
+					<option value="8">24 hours</option>
+				</select>
+				Note: A short interval can cause errors due to the security measures taken by sites against DDoS attacks.
+			</div>
+			<div class="col-sm-4">
+				<select name="type" class="form-select">
+					<option value="" selected disabled>Type of monitor</option>
+					<option value="0">Email</option>
+					<option value="1">Password</option>
+					<option value="2">Phone number</option>
+					<option value="3">Credit card number</option>
+					<option value="4">Other</option>
+				</select>
+			</div>
+			<div class="col-sm-12">
+				<input type="submit" class="btn btn-primary" value="Create" />
+			</div>
+		</form>
+		<% if (monitors !== []) { %>
+			<ul class="monitors">
+				<h2>Monitors :</h2>
+				<% for (const monitor of monitors) { %>
+					<li class="monitor">
+						<h3><%= monitor.name %></h3>
+						<div class="status">
+							<% if (monitor.status === "STARTING") { %>
+								<span>Starting...</span>
+							<% } else if (monitor.status === "ERROR") { %>
+								<span>An error was accured durring the keyword search.</span>
+							<% } else { %>
+								<ul class="services">
+									<li class="service">
+										<a class="text-decoration-none" href='https://www.google.com/search?q="<%= monitor.keyword %>"' target="_blank">
+											<img src="/static/img/icons/google.png" alt="Google icon" width="16px" height="16px" />
+											<strong>Google</strong>
+										</a> :
+										<span><%= monitor.status.google %></span>
+									</li>
+									<li class="service">
+										<a class="text-decoration-none" href='https://www.bing.com/search?q="<%= monitor.keyword %>"' target="_blank">
+											<img src="/static/img/icons/bing.png" alt="Bing icon" width="16px" height="16px" />
+											<strong>Bing</strong>
+										</a> :
+										<span><%= monitor.status.bing %></span>
+									</li>
+									<% if (monitor.status.HIBP) { %>
+										<li class="service">
+											<% if (parseInt(monitor.type, 10) === 0) { %>
+												<a class="text-decoration-none" href="https://haveibeenpwned.com" target="_blank">
+											<% } else if (parseInt(monitor.type, 10) === 1) { %>
+												<a class="text-decoration-none" href="https://haveibeenpwned.com/Passwords" target="_blank">
+											<% } %>
+													<img src="/static/img/icons/HIBP.png" alt="HIBP icon" width="16px" height="16px" />
+													<strong>Have I Been Pwned?</strong>
+												</a> :
+											<span><%= monitor.status.HIBP %></span>
+										</li>
+									<% } %>
+								</ul>
+								<div class="info">
+									<span>Creation date: <u><%= new Date(monitor.createdAt).toLocaleString() %></u></span>
+									<span>Last update: <u><%= new Date(monitor.updatedAt).toLocaleString() %></u></span>
+								</div>
+								<a href="/delete?id=<%= monitor.id %>"><i class="bi bi-trash"></i>Delete</a>
+
+								<a href="#" data-bs-toggle="modal" data-bs-target="#<%= monitor.name.toLowerCase().split(' ').join('-') %>-editModal"><i class="bi bi-pencil"></i>Edit</a>
+								
+								<!-- Modal -->
+								<div class="modal fade" id="<%= monitor.name.toLowerCase().split(' ').join('-') %>-editModal" tabindex="-1" aria-labelledby="Edit modal" aria-hidden="true">
+									<div class="modal-dialog modal-dialog-centered">
+									<form class="modal-content" action="/update?id=<%= monitor.id %>" method="post">
+										<div class="modal-header">
+										<h2 class="modal-title fs-5" id="staticBackdropLabel">Edit monitor :</h2>
+										<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+										</div>
+										<div class="modal-body">
+											<div class="row g-3">
+												<div class="col-sm-6">
+													<input type="email" name="email" class="form-control" placeholder="Email" value="<%= monitor.email %>" autocomplete="email" aria-label="Email input">
+												</div>
+												<div class="col-sm-6">
+													<input type="text" name="name" class="form-control" placeholder="Monitor name" value="<%= monitor.name %>" autocomplete="off" aria-label="Monitor name input">
+												</div>
+												<div class="col-sm-12 input-group">
+													<input type="password" name="keyword" class="form-control" placeholder="Keyword" value="<%= monitor.keyword %>" autocomplete="off" aria-label="Keyword input" aria-describedby="password-input">
+													<button type="button" class="input-group-text" id="password-input"><i class="bi bi-eye"></i></button>
+												</div>
+												<div class="col-sm-4">
+													<select name="mode" class="form-select">
+														<option value="">Alert when :</option>
+														<option value="0">The keyword is found</option>
+														<option value="1">The keyword is missing</option>
+													</select>
+												</div>
+												<div class="col-sm-4">
+													<select name="interval" class="form-select">
+														<option value="" selected disabled>Monitor interval</option>
+														<option value="0">1 minute</option>
+														<option value="1">5 minutes</option>
+														<option value="2">15 minutes</option>
+														<option value="3">30 minutes</option>
+														<option value="4">1 hour</option>
+														<option value="5">3 hours</option>
+														<option value="6">6 hours</option>
+														<option value="7">12 hours</option>
+														<option value="8">24 hours</option>
+													</select>
+												</div>
+												<div class="col-sm-4">
+													<select name="type" class="form-select">
+														<option value="" selected disabled>Type of monitor</option>
+														<option value="0">Email</option>
+														<option value="1">Password</option>
+														<option value="2">Phone number</option>
+														<option value="3">Credit card number</option>
+														<option value="4">Other</option>
+													</select>
+												</div>
+											</div>
+										</div>
+										<div class="modal-footer">
+											<input type="submit" class="btn btn-primary" value="Update" />
+										</div>
+									</form>
+									</div>
+								</div>
+							<% } %>
+						</div>
+					</li>
+				<% } %>
+			</ul>
+ 	   <% } %>
+		<% if (info.alert) { %>
+			<div class="toast-container position-fixed bottom-0 end-0 p-3">
+		<% if (info.alert.type === "success") { %>
+			<div class="toast fade show text-bg-success" role="alert" aria-live="assertive" aria-atomic="true" id="alertToast">
+  	    <% } else if (info.alert.type === "error") { %>
+			<div class="toast fade show text-bg-danger" role="alert" aria-live="assertive" aria-atomic="true" id="alertToast">
+		<% } else { %>
+			<div class="toast fade show" role="alert" aria-live="assertive" aria-atomic="true" id="alertToast">
+		<% } %>
+        <div class="toast-header">
+          <strong class="me-auto">System</strong>
+          <small>Now</small>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body"><%= info.alert.message %></div>
+		</div>
+		</div>
+		<% } %>
+		<script src="/static/js/index.js"></script>
+		<script src="/static/libs/bootstrap/js/bootstrap.min.js"></script>
+	</body>
+</html>
